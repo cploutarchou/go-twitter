@@ -1,40 +1,43 @@
 package stream
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 )
+
+const sampleURL = "https://api.twitter.com/2/tweets/sample/stream?"
 
 type Stream interface {
 	StreamSample() ([]byte, error)
 }
 
 type streamImpl struct {
-	Url    string
-	Method string
-	Auth   string
-	Cookie string
-	Client *http.Client
+	client *http.Client
+	bearer string
+	cookie *http.Cookie
 }
 
-func NewStream(ulr, method, bearerToken, Cookie string) Stream {
-	return &streamImpl{
-		Url:    ulr,
-		Method: method,
-		Auth:   bearerToken,
-		Cookie: Cookie,
+func NewStream(bearerToken string, cookie *http.Cookie, client *http.Client) (Stream, error) {
+	if client == nil {
+		return nil, fmt.Errorf("client is not initialized")
 	}
+	return &streamImpl{
+		bearer: bearerToken,
+		cookie: cookie,
+		client: client,
+	}, nil
 }
 
 func (s *streamImpl) StreamSample() ([]byte, error) {
-	req, err := http.NewRequest(s.Method, s.Url, nil)
+	req, err := http.NewRequest("GET", sampleURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Authorization", s.Auth)
-	req.Header.Add("Cookie", s.Cookie)
+	req.Header.Add("Authorization", s.bearer)
+	req.Header.Add("Cookie", fmt.Sprintf("%s=%s", s.cookie.Name, s.cookie.Value))
 	
-	res, err := s.Client.Do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
