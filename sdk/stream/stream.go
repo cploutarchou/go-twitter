@@ -17,11 +17,11 @@ type streamImpl struct {
 	Client *http.Client
 }
 
-func NewStream(ulr, method, bearenToken, Cookie string) Stream {
+func NewStream(ulr, method, bearerToken, Cookie string) Stream {
 	return &streamImpl{
 		Url:    ulr,
 		Method: method,
-		Auth:   bearenToken,
+		Auth:   bearerToken,
 		Cookie: Cookie,
 	}
 }
