@@ -9,13 +9,11 @@ import (
 	"net/url"
 	"strings"
 	"sync"
-	
-	"github.com/cploutarchou/go-twitter/sdk/stream"
 )
 
 // Client defines the behavior of a Twitter client.
 type Client interface {
-	Stream() (stream.Stream, error)
+	Stream() (Stream, error)
 	getBearerToken() (string, error)
 }
 
@@ -43,24 +41,25 @@ func NewClient(config *Config) (Client, error) {
 			Url:            config.Url,
 			ConsumerKey:    config.ConsumerKey,
 			ConsumerSecret: config.ConsumerSecret,
+			Cookie:         nil,
 		},
 	}
 	bearer, err := cl.getBearerToken()
 	if err != nil {
-		return nil, fmt.Errorf("error getting bearer token: %w", err)
+		return nil, fmt.Errorf("error getting bearer token! Error :  %w", err)
 	}
 	cl.config.Bearer = bearer
 	return cl, nil
 }
 
 // Stream returns a new Twitter stream.
-func (c *clientImpl) Stream() (stream.Stream, error) {
+func (c *clientImpl) Stream() (Stream, error) {
 	c.once.Do(func() {
 		c.client = http.DefaultClient
 	})
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return stream.NewStream(c.config.Bearer, c.config.Cookie, c.client)
+	return NewStream(c.config.Bearer, c.config.Cookie, c.client)
 }
 
 // GetBearerToken returns a bearer token for Twitter API authentication.
@@ -89,6 +88,7 @@ func (c *clientImpl) getBearerToken() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to send request: %w", err)
 	}
+	fmt.Println(res.StatusCode)
 	defer res.Body.Close()
 	
 	if res.StatusCode != http.StatusOK {
